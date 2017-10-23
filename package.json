@@ -1,7 +1,7 @@
 {
-  "name": "learningjs",
-  "version": "0.1.1",
-  "description": "logistic regression/c4.5 decision tree algorithm",
+  "name": "c4.5_with_random_forest",
+  "version": "0.1.0",
+  "description": "logistic regression/c4.5 decision tree algorithm with random forest",
   "main": "learningjs.js",
   "scripts": {
     "test_tree": "node test_lr.js",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yandongliu/learningjs"
+    "url": "https://github.com/Heliodromel/C4.5_with_random_forest"
   },
   "dependencies": {
     "underscore": "*",
@@ -20,11 +20,9 @@
     "decision tree",
     "machine learning",
     "classifier",
-    "c4.5"
+    "c4.5",
+    "random forest"
   ],
-  "author": "Yandong Liu",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/yandongliu/learningjs/issues"
-  }
+  "author": "Heliodromel",
+  "license": "MIT"
 }
