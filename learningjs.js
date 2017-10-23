@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// javascript implementation of 
+// javascript implementation of
 //   decision tree
 //   logistic regression
 //
@@ -9,7 +9,7 @@
 
 
 var learningjs=(function (exports) {
-  'use strict'; 
+  'use strict';
 
   var _und;
 
@@ -35,10 +35,74 @@ var learningjs=(function (exports) {
     console.log(s,msg);
   }
 
-  var tree = function () {}, debug = false; 
+  var debug = false;
+  var tree = function () {};
+  var randomForest = function () {};
+
+  randomForest.prototype = {
+    train: function(D, treesNumber = 3, cb) {
+      // creating training sets for each tree
+      var Ds = [];
+      for (var t = 0; t < treesNumber; t++) {
+        Ds[t] = Object.assign({}, D, {
+          data: [],
+          targets: [],
+          s_targets: []
+        });
+
+      }
+
+      for (var i = D.data.length - 1; i >= 0 ; i--) {
+        // assigning items to training sets of each tree
+        // using 'round-robin' strategy
+        var correspondingTree = i % treesNumber;
+        var subD = Ds[correspondingTree];
+        subD.data.push(D.data[i]);
+        subD.targets.push(D.targets[i]);
+        subD.s_targets.push(D.s_targets[i]);
+      }
+
+      // building decision trees
+      var models = [], errors = [];
+      for (var t = 0; t < treesNumber; t++) {
+        new tree().train(Ds[t], function(model, error) {
+          models.push(model);
+          errors.push(error);
+        });
+      }
+
+      cb({
+        calcAccuracy: function(samples, targets, cb) {
+          var total = samples.length;
+          var correct = 0, exist = 0;
+          for(var i=0;i<samples.length;i++) {
+            var actual = targets[i];
+            var preds = {};
+            for (var t = 0; t < treesNumber; t++) {
+              var sample = samples[i];
+              var pred = models[t].classify(sample);
+              preds[pred] = (preds[pred] || 0) + 1;
+            }
+
+            // Exist in
+            if (preds[actual]) {
+              exist++;
+              // console.log("Searching : ",actual, "Found :", preds)
+            }
+            if(Math.max(...Object.values(preds)) === preds[actual]){
+              correct++;
+            }
+          }
+          if(total>0)
+            cb(correct/total, exist/total, correct, exist, total);
+          else
+            cb(0.0);
+        },
+      }, undefined);
+    }
+  }
 
   tree.prototype = {
-
     train: function(D, cb) {
       var major_label = this.mostCommon(D.targets);
       cb({
@@ -56,7 +120,7 @@ var learningjs=(function (exports) {
               if(sampleVal<=root.cut)
                 childNode=root.vals[1];
               else
-                childNode=root.vals[0]; 
+                childNode=root.vals[0];
             } else {
               var attr = root.name;
               var sampleVal = sample[D.feature_name2id[attr]];
@@ -64,7 +128,7 @@ var learningjs=(function (exports) {
             }
             //unseen feature value (didn't appear in training data)
             if(typeof childNode === 'undefined') {
-              //console.log('unseen feature value:',root.name,'sample:',sample);
+              // console.log('unseen feature value:',root.name,'sample:',sample);
               return major_label;
             }
             root = childNode.child;
@@ -77,8 +141,8 @@ var learningjs=(function (exports) {
           for(var i=0;i<samples.length;i++) {
             var pred = this.classify(samples[i]);
             var actual = targets[i];
-            //console.log('predict:'+pred,' actual:'+actual);
             if(pred === actual){
+              // console.log('predict:'+pred,' actual:'+actual);
               correct++;
             }
           }
@@ -94,11 +158,11 @@ var learningjs=(function (exports) {
       var node;
       if (targets.length == 0) {
         debugp("==no data",0);
-        return {type:"result", val: major_label, name: major_label,alias:major_label+this.randomTag() }; 
+        return {type:"result", val: major_label, name: major_label,alias:major_label+this.randomTag() };
       }
       if (targets.length == 1) {
         debugp("==end node "+targets[0],0);
-        return {type:"result", val: targets[0], name: targets[0],alias:targets[0]+this.randomTag() }; 
+        return {type:"result", val: targets[0], name: targets[0],alias:targets[0]+this.randomTag() };
       }
       if(l_features_name.length == 0) {
         debugp("==returning the most dominate feature", 0);
@@ -144,7 +208,7 @@ var learningjs=(function (exports) {
         }
       }
       return node;
-    }, 
+    },
 
     //node(alias, vals(node))
     addEdges:function(node, colors, h_color, g){
@@ -155,7 +219,7 @@ var learningjs=(function (exports) {
           g = that.addEdges(m, colors, h_color, g);
         });
         return g;
-      } else if(node.type == 'feature_value'){ 
+      } else if(node.type == 'feature_value'){
         if(node.child.type != 'result'){
           g.push([node.child.alias+'','val:'+node.alias+'</span>','value']);
           g = this.addEdges(node.child, colors, h_color, g);
@@ -196,11 +260,11 @@ var learningjs=(function (exports) {
                 cleanVal = cleanVal.replace(/val:/,'<span style="color:olivedrab;">');
                 $(x).html(cleanVal);
             }
-          }); 
+          });
       });
-      chart.draw(data, {allowHtml: true}); 
+      chart.draw(data, {allowHtml: true});
       cb();
-    }, 
+    },
 
     getCol:function(d, colIdx) {
       var col = [];
@@ -214,7 +278,7 @@ var learningjs=(function (exports) {
       if(d.length != targets.length) {
         console.log('ERRROR: difft dimensions');
       }
-      for(var i=0;i<d.length;i++) 
+      for(var i=0;i<d.length;i++)
         if(parseFloat(d[i][col])<=cut) {
           nd.push(d[i]);
           nt.push(targets[i]);
@@ -228,7 +292,7 @@ var learningjs=(function (exports) {
       if(d.length != targets.length) {
         console.log('ERRROR: difft dimensions');
       }
-      for(var i=0;i<d.length;i++) 
+      for(var i=0;i<d.length;i++)
         if(parseFloat(d[i][col])>cut) {
           nd.push(d[i]);
           nt.push(targets[i]);
@@ -240,7 +304,7 @@ var learningjs=(function (exports) {
     filterByValue:function(d,t, featureIdx, val) {
       var nd = [];
       var nt = [];
-      for(var i=0;i<d.length;i++) 
+      for(var i=0;i<d.length;i++)
         if(d[i][featureIdx]===val) {
           nd.push(d[i]);
           nt.push(t[i]);
@@ -277,7 +341,7 @@ var learningjs=(function (exports) {
         var sumOfEntropies =  _und(entropies).reduce(function(a,b){return a+b},0);
         //console.log(featureName,' sumOfEntropies:',sumOfEntropies);
         return {feature_id:feature_id, feature_name:featureName, gain:setEntropy - sumOfEntropies, cut:0};
-      } 
+      }
     },
 
     entropy: function (vals){
@@ -286,7 +350,7 @@ var learningjs=(function (exports) {
       var probs = uniqueVals.map(function(x){return that.prob(x,vals)});
       var logVals = probs.map(function(p){return -p*that.log2(p) });
       return logVals.reduce(function(a,b){return a+b},0);
-    }, 
+    },
 
     //conditional entropy if data is split to two
     conditionalEntropy: function(_s, targets, feature_id, cut) {
@@ -294,7 +358,7 @@ var learningjs=(function (exports) {
       var subset2 = this.filterByCutGreater(_s, targets, cut, feature_id);
       var setSize = _s.length;
       return subset1[0].length/setSize*this.entropy(subset1[1]) + subset2[0].length/setSize*this.entropy(subset1[1]);
-    }, 
+    },
 
     maxGain: function (data, targets, l_features_id, l_features_name, featuresType){
       var g45 = [];
@@ -315,7 +379,7 @@ var learningjs=(function (exports) {
 
     log2: function (n){
      return Math.log(n)/Math.log(2);
-    }, 
+    },
 
     mostCommon: function(l){
       var that=this;
@@ -398,12 +462,12 @@ var learningjs=(function (exports) {
         for(var j=0;j<D.nfeatures;j++) {
           theta.push(0.0);
         }
-        thetas[D.l_targets[i]]=theta; 
+        thetas[D.l_targets[i]]=theta;
       }
       for(var i=0;i<D.iterations;i++) {
         if(D.optimizer === 'sgd')
           this.sgd_once(thetas, D.data, D.nfeatures, D.targets,D.l_targets, D.ntargets, D.learning_rate, D.l2_weight);
-        else if (D.optimizer === 'gd') 
+        else if (D.optimizer === 'gd')
           this.gd_batch(thetas, D.data, D.nfeatures,D.targets,D.l_targets, D.ntargets, D.learning_rate, D.l2_weight);
         else {
           console.log('unrecognized optimizer:'+D.optimizer);
@@ -481,7 +545,7 @@ var learningjs=(function (exports) {
           }
         }
       }
-    }, 
+    },
 
     compThetaXProduct:function(theta, sample, nfeatures) {
       var a=0;
@@ -495,6 +559,7 @@ var learningjs=(function (exports) {
   var exports = exports||{};
   exports.logistic = lr;
   exports.tree = tree;
+  exports.randomForest = randomForest;
   return exports;
 
-})(typeof module != 'undefined' && module.exports); 
+})(typeof module != 'undefined' && module.exports);
