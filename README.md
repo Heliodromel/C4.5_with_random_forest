@@ -1,15 +1,5 @@
-LearningJS: A Javascript Implementation of Logistic Regression and C4.5 Decision Tree Algorithms
-==========
-Author: Yandong Liu. Email: yandongl @ cs.cmu.edu
-
-#Update
-I've made some update on the data loading logic so now it reads in csv-format file. Previous version is still accessible but it's no longer supported.
-
-#Introduction
-Javascript implementation of several machine learning algorithms including Decision Tree and Logistic Regression this far. More to come.
-
-#Online Demo
-Here's a online [demo](http://www.cs.cmu.edu/~yandongl/learningjs/decision-tree-demo.html) with visualization and a few datasets.
+C4.5 with random forest: This project is a fork from [learningjs](https://github.com/yandongliu/learningjs), adding the support for random forests
+========================
 
 #Data format
 Input files need to be in CSV-format with 1st line being feature names. One of the features has to be called 'label'. E.g.  
@@ -18,7 +8,7 @@ outlook, temp, humidity, wind, label
 text, real, text, text, feature_type
 'Sunny',80,'High', 'Weak', 'No'
 'Sunny',82,'High', 'Strong', 'No'
-'Overcast',73,'High', 'Weak', 'Yes' 
+'Overcast',73,'High', 'Weak', 'Yes'
 </pre>
 There's also an optional 2nd line for feature types and the 'label' column for 2nd line has to be called 'feature_type'. This is useful if feature types are mixed. For Logistic Regression, all features should be real numbers. E.g.
 <pre>
@@ -29,7 +19,6 @@ label,a,b,c,d,e,f,g,h,i,j,k,l,m
 1,4,0.73797,1.4597,0.35376,0.97566,1,0.81697,0.0068768,0.0086068,0.01595,0.065491,0.0042707,0.0011544
 </pre>
 
-
 #Usage
 Data loading: data_util.js provides three methods:
 
@@ -39,36 +28,14 @@ Data loading: data_util.js provides three methods:
 
 In the loading callback function you will obtain a data object D on which you can apply the learning methods. Note that only Decision Tree supports both real and categorical features. Logistic Regression works on real features only.  
 
-
 ```javascript
-<script type="text/javascript" src="http://code.jquery.com/jquery-1.8.1.min.js"></script>
-<script type="text/javascript" src="data_util.js"></script>
-<script type="text/javascript" src="learningjs.js"></script>
-loadString(content, function(D) {
-  var tree = new learningjs.tree();
-  tree.train(D, function(model, err){
-    if(err) {
-      console.log(err);
-    } else {
-      model.calcAccuracy(D.data, D.targets, function(acc, correct, total){
-        console.log( 'training: got '+correct +' correct out of '+total+' examples. accuracy:'+(acc*100.0).toFixed(2)+'%');
-      });
-    }
-  });
-}); 
-```
-
-#Use in Nodejs
-Similarly you need to import the lib and do the same:
-
-```javascript 
 var learningjs = require('learningjs.js');
 var data_util = require('data_util.js');
 var tree = new learningjs.tree();
 data_util.loadRealFile(fn_csv, function(D) {
 
   //normalize data
-  data_util.normalize(D.data, D.nfeatures); 
+  data_util.normalize(D.data, D.nfeatures);
 
   //logistic regression. following params are optional
   D.optimizer = 'sgd'; //default choice. other choice is 'gd'
@@ -76,7 +43,7 @@ data_util.loadRealFile(fn_csv, function(D) {
   D.l2_weight = 0.0;
   D.iterations = 1000; //increase number of iterations for better performance
 
-  new learningjs.logistic().train(D, function(model, err){
+  new learningjs.train(D, function(model, err){
     if(err) {
       console.log(err);
     } else {
@@ -90,8 +57,30 @@ data_util.loadRealFile(fn_csv, function(D) {
       });
     }
   });
-}); 
+
+  var randomForest = new learningjs.randomForest();
+  var treesCount = 10;
+  randomForest.train(D, treesCount, function(model, err) {
+      if (err) {
+          console.log(err);
+      } else {
+          model.calcAccuracy(D.data, D.targets, function(firstInAcc, existInAcc, correct, exist, total){
+              console.log('training : ');
+              console.log('  exists in randomForest results:', exist, '/', total, '=', (existInAcc*100.0).toFixed(2)+'%');
+              console.log('  first in randomForest results:', correct, '/', total, '=', +(firstInAcc*100.0).toFixed(2)+'%');
+          });
+          model.calcAccuracy(T.data, T.targets, function(firstInAcc, existInAcc, correct, exist, total) {
+              console.log('test : ');
+              console.log('  exists in randomForest results:', exist, '/', total, '=', (existInAcc*100.0).toFixed(2)+'%');
+              console.log('  first in randomForest results:', correct, '/', total, '=', +(firstInAcc*100.0).toFixed(2)+'%');
+          });
+      }
+  });
+});
 ```
+
+#Documentation
+See [learningjs](https://github.com/yandongliu/learningjs), which is the original project for more information and for demo.
 
 #License
 MIT
