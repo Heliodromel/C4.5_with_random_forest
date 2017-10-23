@@ -1,6 +1,6 @@
 {
   "name": "c4.5_with_random_forest",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "logistic regression/c4.5 decision tree algorithm with random forest",
   "main": "learningjs.js",
   "scripts": {
